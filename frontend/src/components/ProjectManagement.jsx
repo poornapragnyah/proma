@@ -59,6 +59,7 @@ const activeRatio = Math.floor((props.active / props.total) * 1000) / 10;
           />
         }
         button="View Active Projects"
+        link="/projects"
       />
 
       <Card 

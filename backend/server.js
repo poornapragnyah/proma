@@ -6,9 +6,9 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 const loginRoutes = require('./routes/login');
 const { db } = require('./config/database');
-const { verifyToken } = require('./middleware/auth');
-const { checkProjectPermission } = require('./middleware/permissions');
-const register = require('./routes/register');
+const  verifyToken  = require('./middleware/auth');
+const registerRoutes = require('./routes/register');
+const projectRoutes = require('./routes/project');
 
 const app = express();
 // Middleware
@@ -27,8 +27,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/auth/register', register);
+app.use('/api/auth/register', registerRoutes);
 app.use('/api/auth/login', loginRoutes)
+app.use('/api/projects',projectRoutes);
+
   
 // Health check route (unprotected)
 app.get('/api/health', (req, res) => {
@@ -36,92 +38,92 @@ app.get('/api/health', (req, res) => {
 });
 
 // Projects Routes (protected)
-app.get('/api/projects', verifyToken, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      `SELECT p.*, pm.role as user_role 
-       FROM projects p 
-       INNER JOIN project_members pm ON p.id = pm.project_id 
-       WHERE pm.user_id = ?`,
-      [req.user.userId]
-    );
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// app.get('/api/projects', verifyToken, async (req, res) => {
+//   try {
+//     const [rows] = await db.query(
+//       `SELECT p.*, pm.role as user_role 
+//        FROM projects p 
+//        INNER JOIN project_members pm ON p.id = pm.project_id 
+//        WHERE pm.user_id = ?`,
+//       [req.user.userId]
+//     );
+//     res.json(rows);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-app.post('/api/projects', verifyToken, async (req, res) => {
-  try {
-    const { name, description, start_date, end_date } = req.body;
+// app.post('/api/projects', verifyToken, async (req, res) => {
+//   try {
+//     const { name, description, start_date, end_date } = req.body;
     
-    const [result] = await db.query(
-      'INSERT INTO projects (name, description, start_date, end_date) VALUES (?, ?, ?, ?)',
-      [name, description, start_date, end_date]
-    );
+//     const [result] = await db.query(
+//       'INSERT INTO projects (name, description, start_date, end_date) VALUES (?, ?, ?, ?)',
+//       [name, description, start_date, end_date]
+//     );
 
-    // Add creator as project owner
-    await db.query(
-      'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-      [result.insertId, req.user.userId, 'OWNER']
-    );
+//     // Add creator as project owner
+//     await db.query(
+//       'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+//       [result.insertId, req.user.userId, 'OWNER']
+//     );
 
-    res.status(201).json({
-      id: result.insertId,
-      ...req.body,
-      creator_id: req.user.userId,
-      role: 'OWNER'
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.status(201).json({
+//       id: result.insertId,
+//       ...req.body,
+//       creator_id: req.user.userId,
+//       role: 'OWNER'
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-// Tasks Routes (protected)
-app.get('/api/tasks', verifyToken, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      `SELECT t.*, p.name as project_name 
-       FROM tasks t 
-       INNER JOIN projects p ON t.project_id = p.id
-       INNER JOIN project_members pm ON p.id = pm.project_id 
-       WHERE pm.user_id = ?`,
-      [req.user.userId]
-    );
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// // Tasks Routes (protected)
+// app.get('/api/tasks', verifyToken, async (req, res) => {
+//   try {
+//     const [rows] = await db.query(
+//       `SELECT t.*, p.name as project_name 
+//        FROM tasks t 
+//        INNER JOIN projects p ON t.project_id = p.id
+//        INNER JOIN project_members pm ON p.id = pm.project_id 
+//        WHERE pm.user_id = ?`,
+//       [req.user.userId]
+//     );
+//     res.json(rows);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-app.post('/api/tasks', verifyToken, async (req, res) => {
-  try {
-    const { project_id, title, description, status, due_date } = req.body;
+// app.post('/api/tasks', verifyToken, async (req, res) => {
+//   try {
+//     const { project_id, title, description, status, due_date } = req.body;
 
-    // Verify project access
-    const [access] = await db.query(
-      'SELECT role FROM project_members WHERE project_id = ? AND user_id = ?',
-      [project_id, req.user.userId]
-    );
+//     // Verify project access
+//     const [access] = await db.query(
+//       'SELECT role FROM project_members WHERE project_id = ? AND user_id = ?',
+//       [project_id, req.user.userId]
+//     );
 
-    if (access.length === 0) {
-      return res.status(403).json({ message: 'No access to this project' });
-    }
+//     if (access.length === 0) {
+//       return res.status(403).json({ message: 'No access to this project' });
+//     }
 
-    const [result] = await db.query(
-      'INSERT INTO tasks (project_id, title, description, status, due_date, creator_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [project_id, title, description, status, due_date, req.user.userId]
-    );
+//     const [result] = await db.query(
+//       'INSERT INTO tasks (project_id, title, description, status, due_date, creator_id) VALUES (?, ?, ?, ?, ?, ?)',
+//       [project_id, title, description, status, due_date, req.user.userId]
+//     );
 
-    res.status(201).json({
-      id: result.insertId,
-      ...req.body,
-      creator_id: req.user.userId
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.status(201).json({
+//       id: result.insertId,
+//       ...req.body,
+//       creator_id: req.user.userId
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 // Project Members Routes
 // app.post('/api/projects/:projectId/members', verifyToken, validateProjectAccess, 

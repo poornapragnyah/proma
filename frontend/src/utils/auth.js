@@ -11,10 +11,7 @@ export const validateToken = (router) => {
   try {
     // console.log("Validating token");
     const decodedToken = jwtDecode(token);
-    console.log("Decoded token:", decodedToken);
-    const currentTime = Math.floor(Date.now() / 1000);
-    console.log("Current time:", currentTime);
-    console.log("Token expiry:", decodedToken.exp);    
+    const currentTime = Math.floor(Date.now() / 1000);; 
     if (decodedToken.exp < currentTime) {
     //   console.log("Token expired");
       localStorage.removeItem("token");

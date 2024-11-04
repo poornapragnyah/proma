@@ -52,12 +52,12 @@ const registerManager = async (req, res) => {
     }
 
     // Check if user exists
-    const [existingManagers] = await db.query(
-      'SELECT * FROM managers WHERE email = ? OR username = ?',
-      [email || '', username || '']
+    const [existingmanager] = await db.query(
+      'SELECT * FROM manager WHERE email = ?',
+      [email || '']
     );
 
-    if (existingManagers.length > 0) {
+    if (existingmanager.length > 0) {
       return res.status(400).json({ message: 'Manager already exists' });
     }
 
@@ -66,7 +66,7 @@ const registerManager = async (req, res) => {
 
     // Create user
     const [result] = await db.query(
-      'INSERT INTO managers (username, email, password_hash) VALUES (?, ?, ?)',
+      'INSERT INTO manager (username, email, password_hash) VALUES (?, ?, ?)',
       [username, email, hashedPassword]
     );
 

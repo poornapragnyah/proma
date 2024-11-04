@@ -36,12 +36,13 @@ const loginUser = async (req, res) => {
       if (!validPassword) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-  
+      
+      const role = 'project_member'
       // Generate JWT token
       const token = jwt.sign(
-        { userId: user.id, username: user.username },
+        { userId: user.id, username: user.username, role: role },
         JWT_SECRET,
-        { expiresIn: '0.01h' }
+        { expiresIn: '1h' }
       );
   
       // Respond with the token and user data
@@ -65,13 +66,12 @@ const loginManager = async (req, res) => {
   
       let query;
       let params;
-    query = 'SELECT * FROM managers WHERE username = ?';
+    query = 'SELECT * FROM manager WHERE username = ?';
     params = [username];
 
   
       // Query the database
       const [managers] = await db.query(query, params);
-      console.log(managers);
       if (managers.length === 0) {
         return res.status(401).json({ message: 'Manager not found' });
       }
@@ -90,9 +90,9 @@ const loginManager = async (req, res) => {
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: manager.id, username: manager.username },
+        { userId: manager.id, username: manager.username , role: 'project_manager'},
         JWT_SECRET,
-        { expiresIn: '0.01h' }
+        { expiresIn: '1h' }
       );
   
       // Respond with the token and user data
@@ -141,11 +141,10 @@ const loginAdmin = async (req, res) => {
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: admin.id, username: admin.username },
+        { userId: admin.id, username: admin.username, role: 'admin' },
         JWT_SECRET,
-        { expiresIn: '0.01h' }
+        { expiresIn: '1h' }
       );
-  
       // Respond with the token and user data
       res.json({
         token,

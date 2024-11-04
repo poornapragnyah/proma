@@ -6,6 +6,7 @@ export const metadata = {
   description: "Project Management App",
 };
 
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">

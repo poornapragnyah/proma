@@ -1,11 +1,14 @@
+"use client"
 import Image from 'next/image';
 import logo from '../../public/logo1.png';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
+  const router = useRouter();
   const logout = async () => {
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        router.push('/login');
   };
 
   return (
