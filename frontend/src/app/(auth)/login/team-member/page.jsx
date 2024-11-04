@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PulseLoader } from "react-spinners";
 import { loginSchema } from "@/schemas/login";
 import { User } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
 
 const loginUser = () => {
     const {
@@ -41,7 +42,6 @@ const loginUser = () => {
 				// console.log("Login successful");
 				toast.success("Login successful"); // Show success message
 				localStorage.setItem("token", token); // Store token in local storage
-				// console.log("token set");
 				// console.log("token from local",localStorage.getItem("token"));
 				await new Promise((resolve) => setTimeout(resolve, 500));
                 router.push("/"); // Redirect to home page

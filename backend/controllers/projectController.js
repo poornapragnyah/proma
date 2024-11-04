@@ -5,7 +5,6 @@ const { db } = require('../config/database');
 // Get all projects user has access to
 
 const getProjects = async (req, res) => {
-    console.log(req.user);
   try {
     const [rows] = await db.query(
     //   `SELECT p.*, pm.role as user_role 
@@ -64,7 +63,6 @@ const getProject = async (req, res) => {
 
 // Update project
 const updateProject = async (req, res) => {
-    console.log("from controller",req.body);
     try {
       const { name, description, start_date, end_date, status } = req.body;
   

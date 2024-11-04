@@ -33,6 +33,7 @@ const Project = () => {
                 setProjects(data); // Setting projects state
             } catch (error) {
                 console.error('Error fetching projects:', error);
+                setProjects([])
                 setError(error.message); // Handling errors
             } finally {
                 setLoading(false); // Setting loading state to false
@@ -55,7 +56,7 @@ const Project = () => {
     return (
         <>
             <div className="flex flex-wrap">
-                {projects.map((project) => (
+                {projects && projects.map((project) => (
                     <ProjectCard
                         key={project.id} // Unique key for each project
                         name={project.name}

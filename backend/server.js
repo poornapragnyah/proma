@@ -9,6 +9,8 @@ const { db } = require('./config/database');
 const  verifyToken  = require('./middleware/auth');
 const registerRoutes = require('./routes/register');
 const projectRoutes = require('./routes/project');
+const profileRoutes = require('./routes/profile');
+
 
 const app = express();
 // Middleware
@@ -30,6 +32,7 @@ app.use((req, res, next) => {
 app.use('/api/auth/register', registerRoutes);
 app.use('/api/auth/login', loginRoutes)
 app.use('/api/projects',projectRoutes);
+app.use('/api/profile',profileRoutes);
 
   
 // Health check route (unprotected)

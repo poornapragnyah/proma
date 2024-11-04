@@ -26,7 +26,6 @@ const loginUser = async (req, res) => {
       }
   
       const user = users[0];
-  
       // Validate the password against the hashed password in the database
       if (!user.password_hash) {
         return res.status(500).json({ message: 'Password not found in database' });
@@ -40,7 +39,7 @@ const loginUser = async (req, res) => {
       const role = 'project_member'
       // Generate JWT token
       const token = jwt.sign(
-        { userId: user.id, username: user.username, role: role },
+        { userId: user.id, username: user.username, email:user.email,role: role },
         JWT_SECRET,
         { expiresIn: '1h' }
       );
@@ -90,7 +89,7 @@ const loginManager = async (req, res) => {
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: manager.id, username: manager.username , role: 'project_manager'},
+        { userId: manager.id, username: manager.username , email:manager.email,role: 'project_manager'},
         JWT_SECRET,
         { expiresIn: '1h' }
       );
@@ -141,7 +140,7 @@ const loginAdmin = async (req, res) => {
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: admin.id, username: admin.username, role: 'admin' },
+        { userId: admin.id, username: admin.username, email:admin.email,role: 'admin' },
         JWT_SECRET,
         { expiresIn: '1h' }
       );
