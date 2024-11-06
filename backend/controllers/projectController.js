@@ -114,6 +114,7 @@ const updateProject = async (req, res) => {
   
 // Delete project
 const deleteProject = async (req, res) => {
+  console.log("project id is",req.params.projectId);
   try {
     await db.query('DELETE FROM projects WHERE id = ?', [req.params.projectId]);
     res.json({ message: 'Project deleted successfully' });
@@ -122,97 +123,123 @@ const deleteProject = async (req, res) => {
   }
 }
 
-// // Manage project members
-// router.post('/:projectId/members', verifyToken, validateProjectAccess, 
-//   checkProjectPermission('manage_members'), async (req, res) => {
-//   try {
-//     const { userId, role } = req.body;
+const getNumberOfProjects = async (req, res) => {
+  try {
+    const [rows1] = await db.query('SELECT COUNT(*) as total_count FROM projects');
+    const { total_count } = rows1[0];
+    const [rows2] = await db.query('SELECT count(*) as active_count FROM projects where status != "completed"'); 
+    const { active_count } = rows2[0];
+    res.json({ total: total_count, active: active_count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createProject = async (req, res) => {
+  try {
+    const { name,user_id, description, start_date, end_date } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO projects (name, description, start_date, end_date) VALUES (?, ?, ?, ?)',
+      [name, description, start_date, end_date]
+    );
     
-//     // Check if user exists
-//     const [users] = await db.query('SELECT id FROM users WHERE id = ?', [userId]);
-//     if (users.length === 0) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
+    // Add creator as project owner
+    await db.query(
+      'INSERT INTO project_members (project_id, owner_id, role) VALUES (?, ?, ?)',
+      [result.insertId, user_id, 'OWNER']
+    );
+    res.status(201).json({
+      id: result.insertId,
+      ...req.body,
+      creator_id: req.user.userId,
+      role: 'OWNER'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 
-//     // Check if user is already a member
-//     const [existingMember] = await db.query(
-//       'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-//       [req.params.projectId, userId]
-//     );
-
-//     if (existingMember.length > 0) {
-//       // Update existing member's role
-//       await db.query(
-//         'UPDATE project_members SET role = ? WHERE project_id = ? AND user_id = ?',
-//         [role, req.params.projectId, userId]
-//       );
-//     } else {
-//       // Add new member
-//       await db.query(
-//         'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-//         [req.params.projectId, userId, role]
-//       );
-//     }
-
-//     res.json({ message: 'Project member updated successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
-// // Remove project member
-// router.delete('/:projectId/members/:userId', verifyToken, validateProjectAccess, 
-//   checkProjectPermission('manage_members'), async (req, res) => {
+// const getProjectTeam = async (req, res) => {
+//   const { projectId } = req.params;
+//   console.log("project id",projectId);
+  
 //   try {
-//     const [member] = await db.query(
-//       'SELECT role FROM project_members WHERE project_id = ? AND user_id = ?',
-//       [req.params.projectId, req.params.userId]
-//     );
-
-//     // Prevent removing the last owner
-//     if (member[0]?.role === 'OWNER') {
-//       const [ownerCount] = await db.query(
-//         'SELECT COUNT(*) as count FROM project_members WHERE project_id = ? AND role = ?',
-//         [req.params.projectId, 'OWNER']
-//       );
-      
-//       if (ownerCount[0].count <= 1) {
-//         return res.status(400).json({ 
-//           message: 'Cannot remove the last project owner' 
-//         });
-//       }
-//     }
-
-//     await db.query(
-//       'DELETE FROM project_members WHERE project_id = ? AND user_id = ?',
-//       [req.params.projectId, req.params.userId]
-//     );
-
-//     res.json({ message: 'Member removed successfully' });
+//     const [rowsOwner] = await db.query('SELECT * FROM project_members WHERE project_id = ? and role="OWNER"', [projectId]);
+//     console.log("owner",rowsOwner);
+//     const [rowsMembers] = await db.query('SELECT * FROM project_members WHERE project_id = ? and role="MEMBER"', [projectId]);
+//     console.log("members",rowsMembers);
+//     res.json({owner: rowsOwner[0], members: rowsMembers});
 //   } catch (error) {
-//     res.status(500).json({ error: error.message });
+//     console.error('Error fetching project team:', error);
+//     res.status(500).json({ error: 'Failed to fetch project team' });
 //   }
-// });
+// };
 
-// // Get project members
-// router.get('/:projectId/members', verifyToken, validateProjectAccess, 
-//   checkProjectPermission('read'), async (req, res) => {
-//   try {
-//     const [members] = await db.query(
-//       `SELECT u.id, u.username, u.email, pm.role, pm.created_at 
-//        FROM project_members pm
-//        INNER JOIN users u ON pm.user_id = u.id
-//        WHERE pm.project_id = ?`,
-//       [req.params.projectId]
-//     );
-    
-//     res.json(members);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+const getProjectTeam = async (req, res) => {
+  const { projectId } = req.params;
+  // console.log("project id", projectId);
+  
+  try {
+    // Query to get the project owner with details from the admins table
+    const [rowsOwner] = await db.query(
+      `SELECT pm.*, a.username AS owner_name, a.email AS owner_email 
+       FROM project_members pm
+       JOIN admins a ON pm.owner_id = a.admin_id
+       WHERE pm.project_id = ? AND pm.role = 'OWNER'`,
+      [projectId]
+    );
+    // console.log("owner", rowsOwner);
 
-// module.exports = router;
+    // Query to get project members with details from the users table
+    const [rowsMembers] = await db.query(
+      `SELECT pm.*, u.username AS member_username, u.email AS member_email 
+       FROM project_members pm
+       JOIN users u ON pm.member_id = u.id
+       WHERE pm.project_id = ? AND pm.role = 'MEMBER'`,
+      [projectId]
+    );
+    // console.log("members", rowsMembers);
+
+    // Return both owner and members in the response
+    res.json({
+      owner: rowsOwner[0] || null,
+      members: rowsMembers
+    });
+  } catch (error) {
+    console.error('Error fetching project team:', error);
+    res.status(500).json({ error: 'Failed to fetch project team' });
+  }
+};
 
 
-module.exports = {getProjects,getProject,updateProject,deleteProject};
+const addProjectMember = async (req, res) => {
+  const { projectId } = req.params
+  const { email } = req.body;
+  try{
+    const [rows] = await db.query(
+      `SELECT id FROM users WHERE email = ?`,
+      [email]
+    );
+    const userId = rows[0].id;
+    await db.query('INSERT INTO project_members (project_id, member_id, role) VALUES (?, ?, ?)', [projectId, userId,"MEMBER"]);
+    res.json({ message: 'Project member added successfully' });
+  }
+  catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+    console.error('Error adding project member:', error);
+    res.status(500).json({ error: 'Failed to add project member' });
+  }
+}
+
+const deleteProjectMember = async (req, res) => {
+  const { projectId, userId } = req.params;
+  try {
+    await db.query('DELETE FROM project_members WHERE project_id = ? AND member_id = ?', [projectId, userId]);
+    res.json({ message: 'Project member deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+module.exports = {getProjects,getProject,updateProject,deleteProject,getNumberOfProjects,createProject,getProjectTeam,addProjectMember,deleteProjectMember};

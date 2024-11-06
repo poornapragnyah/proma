@@ -33,7 +33,7 @@ const loginUser = () => {
                 body: JSON.stringify(data),
                 credentials: "include",
             });
-			console.log("response",response);
+			// console.log("response",response);
 			const { token } = await response.json();
 			// console.log("login",token);
 			// console.log("response",response);

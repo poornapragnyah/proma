@@ -23,6 +23,11 @@ app.use(cors(corsOptions));
 // // Use login routes
 // app.use('/api/login', login);
 // Auth Routes
+app.use((err, req, res, next) => {
+  console.log(req.path, req.method);
+  console.error("Unhandled error:", err);
+  res.status(500).send("Something went wrong!");
+});
 
 app.use((req, res, next) => {
   console.log(req.path, req.method);

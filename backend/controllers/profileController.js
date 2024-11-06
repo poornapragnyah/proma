@@ -21,6 +21,35 @@ const getProfileDetails = async (req, res) => {
     }
 }
 
+const getProfileDetailsTeam = async (req, res) => {
+    console.log("user id",req.params.userId)
+    try{
+        const [rows] = await db.query(
+            `SELECT * FROM admins WHERE admin_id = ?`,
+            [req.params.userId]
+        );
+        res.json(rows[0]);
+        console.log("from controller",rows[0])
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+const getProfileDetailsOwner = async (req, res) => { 
+    try{
+        const [rows] = await db.query(
+            `SELECT * FROM admins WHERE admin_id = ?`,
+            [req.user.userId]
+        );
+        res.json(rows[0]);
+        console.log(rows[0])
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 const updateProfileDetails = async (req, res) => {
     console.log("project controller", req.body)
     try {
@@ -92,5 +121,7 @@ module.exports = {
     getProfileDetails,
     updateProfileDetails,
     uploadImage,
-    getImage
+    getImage,
+    getProfileDetailsTeam,
+    getProfileDetailsOwner
 }

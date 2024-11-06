@@ -86,10 +86,12 @@ const loginManager = async (req, res) => {
       if (!validPassword) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
+
+      console.log("from login manager",manager);
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: manager.id, username: manager.username , email:manager.email,role: 'project_manager'},
+        { userId: manager.manager_id, username: manager.username , email:manager.email,role: 'project_manager'},
         JWT_SECRET,
         { expiresIn: '1h' }
       );
@@ -140,14 +142,14 @@ const loginAdmin = async (req, res) => {
   
       // Generate JWT token
       const token = jwt.sign(
-        { userId: admin.id, username: admin.username, email:admin.email,role: 'admin' },
+        { userId: admin.admin_id, username: admin.username, email:admin.email,role: 'admin' },
         JWT_SECRET,
         { expiresIn: '1h' }
       );
       // Respond with the token and user data
       res.json({
         token,
-        admin: { id: admin.id, username: admin.username, email: admin.email }
+        admin: { id: admin.admin_id, username: admin.username, email: admin.email }
       });
     } catch (error) {
       res.status(500).json({ message: error.message });

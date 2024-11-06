@@ -34,6 +34,7 @@ const ImageUpload = (props) => {
       if (response.ok) {
         setUploadProgress(100);
         setTimeout(() => setIsModalOpen(false), 2000);
+        setIsUploaded(true)
         setIsModalOpen(false)
         toast.success("Image uploaded!")
       } else {
@@ -41,6 +42,7 @@ const ImageUpload = (props) => {
       }
     } catch (error) {
       console.error("Error uploading image:", error);
+      setIsUploaded(false)
     } finally {
       setIsUploading(false);
     }

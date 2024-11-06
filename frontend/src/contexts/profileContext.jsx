@@ -12,7 +12,6 @@ export const UserDetailsProvider = ({ children }) => {
     email: null,
     image: null,
     username: null,
-    bio: null,
     phone: null,
     address: null,
     createdAt: null,
@@ -29,6 +28,7 @@ export const UserDetailsProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       const decodedToken = jwtDecode(token);
       const userId = decodedToken.id;
+      console.log("decoded id",decodedToken.id);
       if (!token) {
         throw new Error('No token found');
       }

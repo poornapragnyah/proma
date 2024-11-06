@@ -1,6 +1,8 @@
-import React from 'react';
+'use client' // Ensures that the component runs in client-side rendering
+import React, { useEffect } from 'react';
 import { Activity, FolderOpen } from 'lucide-react';
 import Card from './Card';
+import { useState } from 'react';
 
 const CircularProgress = ({ value, label, sublabel }) => {
   const radius = 60;
@@ -35,17 +37,12 @@ const CircularProgress = ({ value, label, sublabel }) => {
           <span className="text-3xl font-bold text-gray-700">{value}%</span>
         </div>
       </div>
-      <div className="text-center mt-4">
-        <div className="text-lg font-semibold">{label}</div>
-        <div className="text-gray-600 text-sm">{sublabel}</div>
-      </div>
     </div>
   );
 };
 
 const ProjectDashboard = (props) => {
-const activeRatio = Math.floor((props.active / props.total) * 1000) / 10;
-
+  const ratio = ((props.active / props.total) * 100).toFixed(1);
   return (
     <div className="flex gap-6 flex-wrap">
       <Card 
@@ -53,9 +50,9 @@ const activeRatio = Math.floor((props.active / props.total) * 1000) / 10;
         svg={<Activity className="ml-2 h-6 w-6" />}
         description={
           <CircularProgress 
-            value={activeRatio}
-            label={`${props.active} Active Projects`}
-            sublabel={`Out of ${props.total} total`}
+            value={ratio}
+            label={`Active Projects`}
+            sublabel={`Out of total`}
           />
         }
         button="View Active Projects"

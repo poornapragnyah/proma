@@ -5,12 +5,16 @@ import ProjectCard from '@/components/ProjectCard';
 import Navbar from '@/components/Navbar';
 import { PulseLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
+import BackButton from '@/components/BackButton';
+import AddProjectButton from '@/components/AddProjectButton';
+import { useUserRole } from '@/contexts/userContext';
+
 
 const Project = () => {
     const [projects, setProjects] = useState([]); // State to hold projects
     const [loading, setLoading] = useState(true); // State for loading status
     const [error, setError] = useState(null); // State to handle any potential errors
-
+    const {userRole} = useUserRole(); // Access userRole from the user context
     // Fetch projects from the API
     useEffect(() => {
         const fetchProjects = async () => {
@@ -24,7 +28,7 @@ const Project = () => {
                         },
                         credentials: "include",
                 }); // Fetching data from the API
-                console.log("response",response);
+                // console.log("response",response);
                 if (!response.ok) {
                     // throw new Error('Network response was not ok');
                     toast.error('Network response was not ok');
@@ -55,7 +59,10 @@ const Project = () => {
 
     return (
         <>
-            <div className="flex flex-wrap">
+        <div className='flex m-2 mr-4 justify-between'><BackButton link={"/"}/>{userRole=='admin'?<AddProjectButton/>:<div></div>}</div>
+            <div className="flex flex-wrap m-4">
+                
+                
                 {projects && projects.map((project) => (
                     <ProjectCard
                         key={project.id} // Unique key for each project
@@ -66,6 +73,7 @@ const Project = () => {
                     />
                 ))}
             </div>
+            
         </>
     );
 };
