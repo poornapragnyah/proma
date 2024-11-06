@@ -244,8 +244,10 @@ const deleteProjectMember = async (req, res) => {
 
 const getProjectTasks = async (req, res) => {
   const { projectId } = req.params;
+  console.log("project id",projectId);
   try {
     const [rows] = await db.query('SELECT * FROM tasks WHERE project_id = ?', [projectId]);
+    console.log("rows",rows);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });

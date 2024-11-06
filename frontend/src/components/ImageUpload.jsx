@@ -1,48 +1,76 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Upload, CheckCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
+import { set } from 'react-hook-form';
 
 
 const ImageUpload = (props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [isUploaded,setIsUploaded] = useState(false)
+  const [isUploaded, setIsUploaded] = useState(false);
+  const router = useRouter();
+  const toastId = React.useRef(null);
+
+  useEffect(() => {
+    if (isUploaded) {
+      if (!toast.isActive(toastId.current)) {
+        toastId.current = toast.success("Image uploaded successfully!", {
+          autoClose: 2000,
+          closeOnClick: true,
+          hideProgressBar: false,
+          position: "top-center",
+          className: "text-sm" // Adjust font size here
+        });
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    }
+  }, [isUploaded, router]);
 
   const handleFileUpload = async (file) => {
     setIsUploading(true);
     setUploadProgress(0);
-
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const formData = new FormData();
     formData.append('image', file);
-
+    
     try {
-        const token = localStorage.getItem("token")
+      setUploadProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const token = localStorage.getItem("token");
+      setUploadProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setUploadProgress(75);
+      await new Promise(resolve => setTimeout(resolve, 500));
       const response = await fetch('http://localhost:3001/api/profile/image', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        credentials:'include',
-        body:formData
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: formData
       });
-
-      console.log(response.body)
-
+      setUploadProgress(85);
       if (response.ok) {
+        setIsUploading(false);
         setUploadProgress(100);
+        setIsUploaded(true);
         setTimeout(() => setIsModalOpen(false), 2000);
-        setIsUploaded(true)
-        setIsModalOpen(false)
-        toast.success("Image uploaded!")
       } else {
+        setIsUploading(false);
         throw new Error('Upload failed');
       }
     } catch (error) {
+      setIsUploading(false);
       console.error("Error uploading image:", error);
-      setIsUploaded(false)
+      toast.error("Failed to upload image");
+      setIsUploaded(false);
     } finally {
       setIsUploading(false);
     }
@@ -55,6 +83,7 @@ const ImageUpload = (props) => {
     }
   };
 
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -63,11 +92,11 @@ const ImageUpload = (props) => {
       'image/gif': ['.gif'],
     },
   });
-  
 
   return (
     <div className="relative">
-      <ToastContainer />
+      {/* Toast Notification */}
+      <ToastContainer position="top-right" autoClose={1000} />
 
       {/* Upload Button */}
       <button
@@ -83,6 +112,12 @@ const ImageUpload = (props) => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Upload Image</h2>
+            {isUploaded && (
+              <div className="flex items-center space-x-2 bg-green-100 text-green-700 p-2 rounded-lg mb-4">
+                <CheckCircle className="w-5 h-5" />
+                <span>Image uploaded successfully!</span>
+              </div>
+            )}
 
             <div
               {...getRootProps()}

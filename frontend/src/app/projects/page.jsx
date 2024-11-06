@@ -63,7 +63,7 @@ const Project = () => {
             <div className="flex flex-wrap m-4">
                 
                 
-                {projects && projects.map((project) => (
+                {Array.isArray(projects) && projects.map((project) => (
                     <ProjectCard
                         key={project.id} // Unique key for each project
                         name={project.name}

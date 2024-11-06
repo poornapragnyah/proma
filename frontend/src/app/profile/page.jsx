@@ -10,14 +10,18 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ImageUpload from '@/components/ImageUpload';
 import { User } from 'lucide-react';
+import Image from 'next/image';
+
+const UserImage = '/profile.jpg';
 
 
 const ProfilePage = () => {
-  const [profileImage, setProfileImage] = useState(User);
+  const [profileImage, setProfileImage] = useState(UserImage);
   const [userName,setUserName] = useState(null)
   const [userEmail,setUserEmail] = useState(null)
   const [loading, setLoading] = useState(false)
-
+  const decodedToken = jwtDecode(localStorage.getItem('token'));
+  const userRole = decodedToken.role;
   const router = useRouter();
 
   useEffect(() => {
@@ -30,7 +34,6 @@ const ProfilePage = () => {
       // Check and validate token
       const token = localStorage.getItem('token');
       const decodedToken = jwtDecode(token)
-      console.log(decodedToken)
       if (!token) {
         router.push("/login");
         return;
@@ -48,9 +51,7 @@ const ProfilePage = () => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        console.log("from profile",response)
         const parsedResponse = await response.json()
-        console.log(parsedResponse)
 
         setUserName(parsedResponse.username)
         setUserEmail(parsedResponse.email)
@@ -79,6 +80,9 @@ const ProfilePage = () => {
       body: JSON.stringify(formattedData),
       credentials: 'include',
     });
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
     toast.success("Successfully updated profile!")
   }
   catch(error){
@@ -99,7 +103,7 @@ const fetchProfileImage = async () => {
       setProfileImage(profileImage);
   } catch (err) {
       console.error("Error fetching profile image:", err);
-      setProfileImage(User)
+      setProfileImage(UserImage)
       setError("Failed to load profile image.");
   } finally {
       setLoading(false);
@@ -119,18 +123,23 @@ useEffect(() => {
             {/* Profile Header */}
             <div className="flex items-center mb-8">
               <div className="relative">
-                <img 
-                  src={profileImage || User}
+                <Image 
+                  src={profileImage || '/profile.jpg'}
                   alt="Profile" 
                   className="w-32 h-32 rounded-full object-cover"
+                  width={128}
+                  height={128}
                   />
               </div>
-              <div className="ml-6">
+              <div className="ml-6 relative">
+
                 <h1 className="text-2xl font-bold">{userName}</h1>
                 <p className="text-gray-600">{userEmail}</p>
+                
                 <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" onClick={updateProfile}>
                   Save Profile
                 </button>
+                <p className='absolute top-1 left-80 text-lg bg-blue-200 p-3 m-1 text-black rounded-full'>{userRole}</p>
               </div>
             </div>
 

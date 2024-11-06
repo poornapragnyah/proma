@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-
+import { set } from 'react-hook-form';
+import TaskListing from '../TaskListing';
 
 const AdminView = ({ project }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editedProject, setEditedProject] = useState({
@@ -186,7 +188,7 @@ const AdminView = ({ project }) => {
           <button onClick={() => setIsEditModalOpen(false)}>close</button>
         </form>
       </dialog>
-
+      <TaskListing projectStatus={project.status}/>
     </div>
   );
 };

@@ -9,10 +9,10 @@ const router = express.Router();
 
 router.get('/', verifyToken, getProfileDetails);
 router.patch('/',verifyToken,updateProfileDetails)
-router.get('/:userId',verifyToken,getProfileDetailsTeam)
-router.get('/owner/:userId',verifyToken,getProfileDetailsOwner)
 router.post('/image',verifyToken,upload.single('image'),uploadImage)
 router.get('/image',verifyToken,getImage)
+router.get('/owner/:userId',verifyToken,getProfileDetailsOwner)
+router.get('/:userId',verifyToken,getProfileDetailsTeam)
 
 
 module.exports = router;

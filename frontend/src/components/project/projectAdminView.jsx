@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-
+import TaskListing from '../TaskListing';
 
 const AdminView = ({ project }) => {
   const router = useRouter();
@@ -245,6 +245,7 @@ const AdminView = ({ project }) => {
           <button onClick={() => setIsDeleteModalOpen(false)}>close</button>
         </form>
       </dialog>
+      <TaskListing projectStatus={project.status} />
     </div>
   );
 };

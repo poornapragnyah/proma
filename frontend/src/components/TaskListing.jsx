@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { useUserRole } from '@/contexts/userContext';
 
 const TaskListing = () => {
   const [tasks, setTasks] = useState([]);
+  const [isAuth, setIsAuth] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const {userRole} = useUserRole();
+  console.log("userRole",userRole)
   const [newTask, setNewTask] = useState({
     name: '',
     description: '',
@@ -139,7 +143,7 @@ const TaskListing = () => {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Tasks</h2>
-        <button className="btn btn-primary" onClick={() => {
+        {isAuth?<button className="btn btn-primary" onClick={() => {
   setIsModalOpen(true);
   setSelectedTask(null); // Reset selectedTask to null to indicate adding a new task
   setNewTask({
@@ -149,7 +153,7 @@ const TaskListing = () => {
   });
 }}>
   Add New Task
-</button>
+</button>:null}
 
       </div>
 
@@ -172,26 +176,31 @@ const TaskListing = () => {
               </span>
             </div>
             <div className="flex space-x-2">
-              <button
-                className={`btn btn-sm ${
-                  projectStatus === 'planned'
-                    ? 'btn-primary'
-                    : projectStatus === 'in_progress'
-                    ? 'btn-info'
-                    : 'btn-success'
-                }`}
-                onClick={() => openEditModal(task)}
-              >
-                Edit
-              </button>
-              <button
-                className="btn btn-error btn-sm"
-                onClick={() => deleteTask(task.id)}
-              >
-                Delete
-              </button>
+                  {(userRole === 'admin' || userRole === 'project_manager') && (
+                    <button
+                      className={`btn btn-sm ${
+                        projectStatus === 'planned'
+                          ? 'btn-primary'
+                          : projectStatus === 'in_progress'
+                          ? 'btn-info'
+                          : 'btn-success'
+                      }`}
+                      onClick={() => openEditModal(task)}
+                    >
+                      Edit
+                    </button>
+                  )}
+
+                  {/* Show Delete button only for project_manager */}
+                  {userRole === 'admin' && (
+                    <button
+                      className="btn btn-error btn-sm"
+                      onClick={() => deleteTask(task.id)}
+                    >
+                      Delete
+                    </button>)}
+                </div>
             </div>
-          </div>
         ))}
       </div>
 
