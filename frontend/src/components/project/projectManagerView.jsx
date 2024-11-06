@@ -109,7 +109,8 @@ const AdminView = ({ project }) => {
             >
               Edit Project
             </button>
-            <button className="btn btn-secondary">
+            <button className="btn btn-secondary"
+            onClick={() => router.push(`/projects/${project.id}/team`)}>
               Manage Team
             </button>
           </div>

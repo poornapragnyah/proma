@@ -51,7 +51,7 @@ const getProfileDetailsOwner = async (req, res) => {
 }
 
 const updateProfileDetails = async (req, res) => {
-    console.log("project controller", req.body)
+    // console.log("project controller", req.body)
     try {
         const { username, email } = req.body;
         // const hashedPassword = await bcrypt.hash(password, 10);

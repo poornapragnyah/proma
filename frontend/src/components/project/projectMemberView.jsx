@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import TaskListing from '../TaskListing';
 
 
 const MemberView = ({ project }) => {
@@ -100,8 +101,7 @@ const MemberView = ({ project }) => {
               </div>
             </div>
           </div>
-    {/* TODO task listing */}
-      {/* Edit Modal */}
+    <TaskListing projectStatus={project.status}/>
       </div>
     </div>
     </div>

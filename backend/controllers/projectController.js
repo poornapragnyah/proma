@@ -242,4 +242,35 @@ const deleteProjectMember = async (req, res) => {
   }
 }
 
-module.exports = {getProjects,getProject,updateProject,deleteProject,getNumberOfProjects,createProject,getProjectTeam,addProjectMember,deleteProjectMember};
+const getProjectTasks = async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const [rows] = await db.query('SELECT * FROM tasks WHERE project_id = ?', [projectId]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createProjectTask = async (req, res) => {
+  const { projectId } = req.params;
+  const { name, description, status } = req.body;
+  try {
+    const [result] = await db.query(
+      'INSERT INTO tasks (title, description, status, project_id) VALUES (?, ?, ?, ?)',
+      [name, description, status, projectId]
+    );
+    console.log("result",result);
+    res.status(201).json({
+      id: result.insertId,
+      name,
+      description,
+      status,
+      project_id: projectId
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+module.exports = {getProjects,getProject,updateProject,deleteProject,getNumberOfProjects,createProject,getProjectTeam,addProjectMember,deleteProjectMember,getProjectTasks,createProjectTask};
