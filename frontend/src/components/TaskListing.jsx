@@ -10,7 +10,6 @@ const TaskListing = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const {userRole} = useUserRole();
-  console.log("userRole",userRole)
   const [newTask, setNewTask] = useState({
     name: '',
     description: '',
@@ -26,7 +25,6 @@ const TaskListing = () => {
       });
 
       const data = await response.json();
-      console.log("from task listing",data)
       setTasks(data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -42,7 +40,7 @@ const TaskListing = () => {
   const openEditModal = (task) => {
     setSelectedTask(task);
     setNewTask({
-      name: task.name,
+      name: task.title,
       description: task.description,
       status: task.status,
     });

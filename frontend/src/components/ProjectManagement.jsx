@@ -43,6 +43,7 @@ const CircularProgress = ({ value, label, sublabel }) => {
 
 const ProjectDashboard = (props) => {
   const ratio = ((props.active / props.total) * 100).toFixed(1);
+  const ratio2 = ((props.myactive / props.active) * 100).toFixed(1);
   return (
     <div className="flex gap-6 flex-wrap">
       <Card 
@@ -60,16 +61,17 @@ const ProjectDashboard = (props) => {
       />
 
       <Card 
-        name="Project Progress"
+        name="My Projects"
         svg={<FolderOpen className="ml-2 h-6 w-6" />}
         description={
           <CircularProgress 
-            value={75}
-            label="Overall Progress"
+            value={ratio2}
+            label="My Projects"
             sublabel="Project completion rate"
           />
         }
         button="View All"
+        link="/my-projects"
       />
     </div>
   );

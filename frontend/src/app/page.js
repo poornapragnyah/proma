@@ -10,6 +10,7 @@ import { useState } from "react";
 export function Home() {
   const [totalProjects, setTotalProjects] = useState(10);
   const [activeProjects, setActiveProjects] = useState(3);
+  const [myProjects, setMyProjects] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -39,13 +40,34 @@ export function Home() {
         console.error('Error fetching projects:', error);
     }
   };
+  const fetchMyNumberOfProjects = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/projects/my-tasks/total',{
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        credentials: 'include',
+      });
+      const result = await response.json();
+      // console.log(result.active);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      setMyProjects(result.total.toString());
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+  }
+};
 fetchNumberOfProjects();
+fetchMyNumberOfProjects();
 }
 , []);
   return (<>
-        <Navbar />
         <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <ProjectDashboard total={totalProjects} active={activeProjects}/>
+        <ProjectDashboard total={totalProjects} active={activeProjects} myactive={myProjects}/>
         </div>        
       </>);
 }

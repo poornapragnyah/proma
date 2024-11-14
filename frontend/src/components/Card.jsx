@@ -3,10 +3,8 @@ import { useRouter } from "next/navigation";
 const Card = (props) => {
   const router = useRouter();
   const handleClick = () => {
-    if(!props.link){
-      props.link = "/"
-    }
-    router.push(props.link);
+    let link = "/"
+    router.push(props.link || link);
   }
     return (
       <div className="card bg-white shadow-xl overflow-hidden m-4">

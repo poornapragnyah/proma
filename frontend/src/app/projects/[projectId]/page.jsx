@@ -37,7 +37,6 @@ const ProjectPage = ({params}) => {
       toast.error('Network response was not ok');
     }
       const data = await response.json(); // Parsing JSON response
-      console.log("data",data);
       setproject(data); // Setting projects state
     } catch (error) {
       console.error('Error fetching project:', error);

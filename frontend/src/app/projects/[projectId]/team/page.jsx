@@ -1,24 +1,25 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { UserPlus, UserMinus, Crown } from 'lucide-react';
-import { set } from 'react-hook-form';
 
 const TeamPage = ({ params }) => {
-  const [team, setTeam] = useState({ owner: null, members: [] });
+  const [team, setTeam] = useState({ owner: null, managers:[],members: [] });
   const [loading, setLoading] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [ownerDetails, setOwnerDetails] = useState(null);
+  const [newMemberRole, setNewMemberRole] = useState('Member');
   const [userDetails, setUserDetails] = useState(null);
-  const unwrappedParams = React.use(params);
-  const { projectId } = unwrappedParams;
+  const { projectId } = React.use(params);
+  console.log("project id",projectId);
 
   useEffect(() => {
     fetchTeam();
   }, []);
 
-  // Fetch team data
   const fetchTeam = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/projects/${projectId}/team`, {
@@ -30,52 +31,21 @@ const TeamPage = ({ params }) => {
         credentials: 'include',
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch team');
-      }
+      if (!response.ok) throw new Error('Failed to fetch team');
       
       const result = await response.json();
       setTeam(result);
-
       setOwnerDetails(result.owner);
-
-    //   // Fetch owner details if we have an owner
-    //   if (result.owner?.owner_id) {
-    //     await fetchOwnerDetails(result.owner.owner_id);
-    //   }
     } catch (error) {
       toast.error(error.message);
-      setTeam({ owner: null, members: [] });
+      setTeam({ owner: null,managers:[], members: [] });
     }
   };
-
-  // Fetch user details (for owner)
-  const fetchOwnerDetails = async (userId) => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/profile/owner/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user details');
-      }
-
-      const userData = await response.json();
-      console.log("Owner data",userData)
-      setOwnerDetails(userData);
-      console.log("owner detail",ownerDetails)
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-    }
-  };
-
 
   const handleAddMember = async (e) => {
     e.preventDefault();
+    console.log("new member email",newMemberEmail);
+    console.log("new member role",newMemberRole);
     setLoading(true);
     try {
       const response = await fetch(`http://localhost:3001/api/projects/${projectId}/team/add-member`, {
@@ -84,11 +54,13 @@ const TeamPage = ({ params }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ email: newMemberEmail }),
+        body: JSON.stringify({ projectId: projectId,email: newMemberEmail, role: newMemberRole }),
         credentials: 'include',
       });
-
-      if (!response.ok) {
+      const data = await response.json();
+      console.log("response",data);
+      if (response.status !== 200) {
+        toast.error(data.message || 'Failed to add team member');
         throw new Error('Failed to add team member');
       }
 
@@ -97,7 +69,8 @@ const TeamPage = ({ params }) => {
       setNewMemberEmail('');
       fetchTeam();
     } catch (error) {
-      toast.error(error.message);
+      console.error('Add member error:', error);
+      toast.error(error);
     } finally {
       setLoading(false);
     }
@@ -113,14 +86,12 @@ const TeamPage = ({ params }) => {
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to remove team member');
-      }
+      if (!response.ok) throw new Error('Failed to remove team member');
 
       toast.success('Team member removed successfully!');
       fetchTeam();
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error);
     }
   };
 
@@ -134,15 +105,15 @@ const TeamPage = ({ params }) => {
           onClick={() => setIsAddModalOpen(true)}
         >
           <UserPlus className="w-5 h-5 mr-2" />
-          Add Member
+          Add
         </button>
       </div>
 
       {/* Team Members Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Owner Card */}
         {team.owner && (
-          <div className="card bg-base-100 shadow-xl border-2 border-primary"  key={team.owner.owner_id}>
+          <div className="card bg-base-100 shadow-xl border-2 border-primary" key={team.owner.owner_id}>
             <div className="card-body">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
@@ -166,6 +137,33 @@ const TeamPage = ({ params }) => {
             </div>
           </div>
         )}
+        {/* Manager Cards */}
+        {team.managers && team.managers.map((manager) => (
+          console.log("manager",manager),
+          <div className="card bg-base-100 shadow-xl border-2 border-secondary" key={manager.manager_id}>
+            <div className="card-body">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="avatar placeholder mr-4">
+                    <div className="bg-neutral text-neutral-content rounded-full w-12">
+                      <span className="text-xl">
+                        {manager.manager_username?.charAt(0) || 'M'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="card-title flex items-center">
+                      {manager.manager_username || 'Project Manager'}
+                    </h2>
+                    <p className="text-sm opacity-70">{manager.manager_email || 'Loading...'}</p>
+                    <span className="badge badge-secondary mt-2">Manager</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
 
         {/* Member Cards */}
         {team.members && team.members.map((member) => (
@@ -199,11 +197,11 @@ const TeamPage = ({ params }) => {
       {/* Add Member Modal */}
       <dialog id="add_member_modal" className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Add Team Member</h3>
+          <h3 className="font-bold text-lg">{`Add Team ${newMemberRole}`}</h3>
           <form onSubmit={handleAddMember}>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Member Email</span>
+                <span className="label-text">{`${newMemberRole} Email`}</span>
               </label>
               <input 
                 type="email" 
@@ -213,6 +211,21 @@ const TeamPage = ({ params }) => {
                 placeholder="Enter email address"
                 required
               />
+              
+              <label className="label">
+                <span className="label-text">Role</span>
+              </label>
+              <select 
+                className="select select-bordered w-full"
+                value={newMemberRole}
+                onChange={(e) => {setNewMemberRole(e.target.value);
+                  console.log("new member role set as",newMemberRole)
+                }}
+                required
+              >
+                <option value="Member">Member</option>
+                <option value="Manager">Manager</option>
+              </select>
             </div>
 
             <div className="modal-action">
@@ -221,7 +234,7 @@ const TeamPage = ({ params }) => {
                 className={`btn btn-primary ${loading ? 'loading' : ''}`}
                 disabled={loading}
               >
-                {loading ? 'Adding...' : 'Add Member'}
+                {loading ? 'Adding...' : `Add ${newMemberRole}`}
               </button>
               <button 
                 type="button"
@@ -233,18 +246,16 @@ const TeamPage = ({ params }) => {
             </div>
           </form>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setIsAddModalOpen(false)}>close</button>
-        </form>
       </dialog>
 
       {/* Empty State */}
-      {!team.owner &&team.members&& team.members.length === 0 && (
+      {!team.owner && (!team.members || team.members.length === 0) && (
         <div className="text-center py-12">
           <h3 className="text-xl font-semibold mb-2">No team members yet</h3>
           <p className="text-gray-500">Start building your team by adding members</p>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };

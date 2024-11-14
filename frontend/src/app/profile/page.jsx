@@ -11,6 +11,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import ImageUpload from '@/components/ImageUpload';
 import { User } from 'lucide-react';
 import Image from 'next/image';
+import { useUserRole } from '@/contexts/userContext';
+import { set } from 'react-hook-form';
 
 const UserImage = '/profile.jpg';
 
@@ -20,8 +22,7 @@ const ProfilePage = () => {
   const [userName,setUserName] = useState(null)
   const [userEmail,setUserEmail] = useState(null)
   const [loading, setLoading] = useState(false)
-  const decodedToken = jwtDecode(localStorage.getItem('token'));
-  const userRole = decodedToken.role;
+  const {userRole} = useUserRole();
   const router = useRouter();
 
   useEffect(() => {
@@ -31,9 +32,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const validateAndFetchProfile = async () => {
-      // Check and validate token
-      const token = localStorage.getItem('token');
-      const decodedToken = jwtDecode(token)
+      const token = localStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
@@ -116,7 +115,6 @@ useEffect(() => {
   
   return (
     <>
-    <Navbar/>
     <div className="min-h-screen bg-base-100 text-xl">
       <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
