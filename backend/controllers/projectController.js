@@ -198,11 +198,20 @@ const getProjectTeam = async (req, res) => {
        WHERE pm.project_id = ? AND pm.role = 'MEMBER'`,
       [projectId]
     );
+
+    const [rowsManager] = await db.query(
+      `SELECT pm.*, m.username AS manager_username, m.email AS manager_email
+        FROM project_members pm
+        JOIN manager m ON pm.manager_id = m.manager_id
+        WHERE pm.project_id = ? AND pm.role = 'MANAGER'`,
+      [projectId]
+    );
     // console.log("members", rowsMembers);
 
     // Return both owner and members in the response
     res.json({
       owner: rowsOwner[0] || null,
+      managers: rowsManager,      
       members: rowsMembers
     });
   } catch (error) {
@@ -213,17 +222,34 @@ const getProjectTeam = async (req, res) => {
 
 
 const addProjectMember = async (req, res) => {
-  const { projectId } = req.params
+  console.log("req.body",req.body);
+  const role = req.body.role;
+  let {projectId}  = req.params
+  projectId = parseInt(projectId, 10);
+  console.log("project id",projectId);  
   const { email } = req.body;
   try{
+    if(role === "Member"){
     const [rows] = await db.query(
       `SELECT id FROM users WHERE email = ?`,
       [email]
     );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
     const userId = rows[0].id;
     await db.query('INSERT INTO project_members (project_id, member_id, role) VALUES (?, ?, ?)', [projectId, userId,"MEMBER"]);
     res.json({ message: 'Project member added successfully' });
   }
+  else if (role === "Manager"){
+    const [rows] = await db.query('SELECT manager_id FROM manager WHERE email = ?', [email]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Manager not found' });
+    }
+    const managerId = rows[0].manager_id;
+    await db.query('INSERT INTO project_members (project_id, manager_id, role) VALUES (?, ?, ?)', [projectId, managerId,"MANAGER"]);
+    res.json({ message: 'Project member added successfully' });
+  }}
   catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
@@ -247,7 +273,6 @@ const getProjectTasks = async (req, res) => {
   console.log("project id",projectId);
   try {
     const [rows] = await db.query('SELECT * FROM tasks WHERE project_id = ?', [projectId]);
-    console.log("rows",rows);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -275,4 +300,87 @@ const createProjectTask = async (req, res) => {
   }
 }
 
-module.exports = {getProjects,getProject,updateProject,deleteProject,getNumberOfProjects,createProject,getProjectTeam,addProjectMember,deleteProjectMember,getProjectTasks,createProjectTask};
+const updateProjectTask = async (req, res) => {
+  const { projectId, taskId } = req.params;
+  console.log("project id",projectId);
+  console.log("task id",taskId);
+  const { name, description, status } = req.body;
+  console.log("req body is",req.body);
+  try {
+    const [result] = await db.query(
+      'UPDATE tasks SET title = ?, description = ?, status = ? WHERE id = ? AND project_id = ?',
+      [name, description, status, taskId, projectId]
+    );
+    res.json({ message: 'Task updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+const deleteProjectTask = async (req, res) => {
+  const { projectId, taskId } = req.params;
+  try {
+    await db.query('DELETE FROM tasks WHERE project_id = ? AND id = ?', [projectId, taskId]);
+    res.json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+const getMyProjects = async (req, res) => {
+  console.log("role", req.user.role);
+  try {
+    let query;
+    if (req.user.role === 'admin') {  
+      query = 'SELECT * FROM project_members WHERE owner_id = ?';
+    } else if (req.user.role === 'project_member') {
+      query = 'SELECT * FROM project_members WHERE member_id = ?';
+    } else if (req.user.role === 'project_manager') {
+      query = 'SELECT * FROM project_members WHERE manager_id = ?';
+    }
+
+    const [tasks] = await db.query(query, [req.user.userId]);
+
+    // If no tasks are found, return an empty array
+    if (tasks.length === 0) {
+      return res.json([]);
+    }
+
+    // Extract project IDs from tasks and prepare them for an IN query
+    const projectIds = tasks.map(task => task.project_id);
+
+    // Use a single query to get all projects matching the IDs
+    const [projects] = await db.query('SELECT * FROM projects WHERE id IN (?)', [projectIds]);
+
+    // Create a mapping of project_id to tasks to include additional info if needed
+    const result = projects.map(project => {
+      const taskInfo = tasks.find(task => task.project_id === project.id);
+      return { ...project, role: taskInfo.role };
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getMyNumberOfProjects = async (req, res) => {
+  try {
+    let query
+    if (req.user.role === 'admin') {
+      query = 'SELECT COUNT(*) as total_count FROM project_members WHERE owner_id = ?';
+    } else if (req.user.role === 'project_member') {
+      query = 'SELECT COUNT(*) as total_count FROM project_members WHERE member_id = ?';
+    } else if (req.user.role === 'project_manager') {
+      query = 'SELECT COUNT(*) as total_count FROM project_members WHERE manager_id = ?';
+    }
+
+    const [total] = await db.query(query, [req.user.userId]);
+    res.json({ total: total[0].total_count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {getProjects,getProject,updateProject,deleteProject,getNumberOfProjects,createProject,getProjectTeam,addProjectMember,deleteProjectMember,getProjectTasks,createProjectTask,updateProjectTask,deleteProjectTask,getMyProjects,getMyNumberOfProjects};
